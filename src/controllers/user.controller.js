@@ -2,7 +2,9 @@ import asyncHandler from "../utils/asyncHandler.js"
 import ApiResponse from "../utils/ApiResponse.js"
 import ApiError from "../utils/ApiError.js"
 import { User } from "../models/user.model.js"
+import { FaceProfile } from "../models/faceprofile.model.js"
 import jwt from "jsonwebtoken"
+import { uploadOnCloudinary } from "../utils/cloudinary.js"
 
 const options = {
     httpOnly: true,
@@ -170,9 +172,44 @@ const reCreateAccessToken = asyncHandler(async (req, res) => {
 
 })
 
+const uploadFaceProfile = asyncHandler(async (req, res) => {
+    const { userId } = req.user._id;
+    const imageFile = req.file;
+
+    if (!imageFile) {
+        throw new ApiError(400, 'Image file is required');
+    }
+
+    const cloudinaryResponse = await uploadOnCloudinary(imageFile.buffer, imageFile.originalname, {
+        folder: 'face_profiles',
+        overwrite: true,
+        transformation: [
+            {
+                width: 500,
+                height: 500,
+                crop: 'fill',
+            },
+        ],
+    });
+
+    if (!cloudinaryResponse) {
+        throw new ApiError(500, 'Failed to upload image to Cloudinary');
+    }
+
+    const faceProfile = await FaceProfile.create({
+        userId,
+        image: cloudinaryResponse.secure_url,
+    });
+
+    return res.status(201).json(
+        new ApiResponse(201, faceProfile, 'Face profile uploaded successfully')
+    );
+});
+
 export {
     registerUser,
     loginUser,
     logoutUser,
-    reCreateAccessToken
+    reCreateAccessToken,
+    uploadFaceProfile
 }

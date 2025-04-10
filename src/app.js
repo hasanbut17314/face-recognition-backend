@@ -14,4 +14,12 @@ app.use(express.urlencoded({ extended: true, limit: "2mb" }))
 app.use(express.static("public"))
 app.use(cookieParser())
 
+
+import userRouter from "./routes/user.route.js";
+import attendanceRouter from "./routes/attendance.route.js";
+
+// Register routes
+app.use("/api/users", userRouter);
+app.use("/api/attendance", attendanceRouter);
+
 export default app

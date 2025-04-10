@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "my-map-clone-project",
+  "private_key_id": "f7608e1eefeecfa3cb2690926d86a29bad2d166b",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCmCRFq3c9vYrbe\nQMRGMTWiMBoq1O/ywgfArCT2nYidM/q0ChQFNaeVq4ZRp05nEcCNfEvfCPbr7JGY\n+cMInIY4a8bQPPkLGk8M4YmfGiP49VMqzEL4/er5aE5QxTplJguY7u31Wai7O+8e\nJExj/oMbZuTBvP1zvlJVAaM0h1JTKoFNJLveZC3L49Ioh4BpTsM0sfCNXCXeQseY\n9f64oSsJWMqP/8CczoBdCforGS20SkzyIwF1NYWB0OuH2AVab+XjSKILsOf2iars\nB4iqR41ZnhsicsvRayb0ZlJrof/AecQT6AK/PvfHTgtKuSKTygkV9yleMAE41HNw\nKmYZRndbAgMBAAECggEAFyMHWtF7AQYL/o+e6jscQrQaSWKv5y+znd0/L2CHc4SV\nSHZpEMrHxhsHViSOz90Q7IZoGjXpFro6FcukKnSJXZ5jL4x3ldz+LAjXwSSG47/n\n7XxWTtUvY77tvuKk/whcsFyHK1vpn+G7sgMT5BFI2s4tTXQVC4Z3eaIHSKAc0DrQ\nIRC24v6lQiM1uqME+hEv9pZnMEj36uTf23+4ulWu8MHpQkZT+MND4InzcZrkT7Eh\n/rTDAbnH0Ll35wXTiCotTUuzVOYhZd3Iv0PE1Myf1tNdzIKNDavPExTPoVvduHfa\nzKcvYJHvf6yHjQi4YtecwmWJQyAHEQ1WH9cGdkWvQQKBgQDPTfQ4o+F6whdcFgi/\n1hc8IM8c65VYujcP7qAJHwi+DOC6FuPhatTVSFBI5rU5+l/RMjrkcNZB5EIsUJ8h\nwdKJ3Bftoo6z5d2/xG6sgTlVfojj4SNlaokEHp9E5WnaGqKRRYPEmBnXh+TpcHva\ndbM8AAkk9dv5t46jASn0nPtmQQKBgQDNCXCCrRNO33UlYxuEQydTDpsV749u1PIs\naDwUZ8Hnrs+pwnAAlBgCPLestd4aT0G2hdFU4nzZubGLeCbAP5R5byVcwKnwVyqT\nriKTy2OAPDUHRKoGX3VzOB28L3YNjyWU7mBRRwW6fUalmZcuiWw2BbSBcEuO8CtG\n9f+bn3gOmwKBgQCoXA4RBf90fDcOgZKfghcirR6nxShog+t+E/WDEuI9vyWv3DE8\nfE/X27/gRQY/zPiOZHXx2zYXE3MunFdwygHcFpSUWSX+MpxSRwz/Kn/O0FIKiGj/\nz3LxlpERGiRKjsEirEskmca7BVHCyKi9tkNXYkwK6WW6u/mqpqJVWDzQQQKBgD4C\n5dlP2TAYm0iEcfUNjl4rY7I9sua1Vs0hdVJCkz2r/Dh+ivtRzvUWQgLlOlhAskIu\ntMH0gggjhlQFMcshL5mOiQFFb+A1rLXfi6uhbuWA0BTzqmylAFOpnCynOhAdxCMH\n+W97iHr/mpdJHZVAkM7B6Pbg7Kk9cAlVK0p474mTAoGAH9EcNLRtZMfkqfR3zlWe\nHPEUWaMfRayF5GoolugfHkoFEMxWcqTKuluFQsKXRCxP+MqnlpsIwou5AX5qmngR\nzDwbrbsML6vaf7ELKKxl9WXr1o2SMebZ5s54opWm4BXw/TFIfBAuQ2+ttCEwsVQg\nI6aHzyBZsdXCRloGqxShNuQ=\n-----END PRIVATE KEY-----\n",
+  "client_email": "attendance-system@my-map-clone-project.iam.gserviceaccount.com",
+  "client_id": "112130299034284851910",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/attendance-system%40my-map-clone-project.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

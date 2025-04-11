@@ -4,7 +4,7 @@ import ApiResponse from "../utils/ApiResponse.js";
 import { Attendance } from "../models/attendance.model.js";
 import { User } from "../models/user.model.js";
 import { FaceProfile } from "../models/faceprofile.model.js";
-import { Vision } from '@google-cloud/vision';
+import Vision from '@google-cloud/vision';
 import { calculateFaceSimilarity } from "../helpers/calculateSimilarity.js";
 import { downloadImageFromUrl, cleanupTempFile } from "../utils/imageUtils.js";
 import fs from 'fs';

@@ -32,7 +32,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
     const { firstName, lastName, email, password, confirmPassword } = req.body
 
-    if ([password, confirmPassword, firstName, lastName, email].some((value) => value.trim() === "")) {
+    if ([password, confirmPassword, firstName, lastName, email].some((value) => value?.trim() === "")) {
         throw new ApiError(400, "All fields are required")
     }
 
@@ -44,7 +44,8 @@ const registerUser = asyncHandler(async (req, res) => {
         firstName,
         lastName,
         email,
-        password
+        password,
+        role: "user"
     })
 
     const { accessToken, refreshToken } = await generateAccessAndRefereshTokens(user._id)
@@ -173,24 +174,13 @@ const reCreateAccessToken = asyncHandler(async (req, res) => {
 })
 
 const uploadFaceProfile = asyncHandler(async (req, res) => {
-    const { userId } = req.user._id;
+    const userId = req.user._id;
     const imageFile = req.file;
 
-    if (!imageFile) {
-        throw new ApiError(400, 'Image file is required');
+    if (!imageFile || !userId) {
+        throw new ApiError(400, 'Image file and user id is required');
     }
-
-    const cloudinaryResponse = await uploadOnCloudinary(imageFile.buffer, imageFile.originalname, {
-        folder: 'face_profiles',
-        overwrite: true,
-        transformation: [
-            {
-                width: 500,
-                height: 500,
-                crop: 'fill',
-            },
-        ],
-    });
+    const cloudinaryResponse = await uploadOnCloudinary(imageFile.path);
 
     if (!cloudinaryResponse) {
         throw new ApiError(500, 'Failed to upload image to Cloudinary');

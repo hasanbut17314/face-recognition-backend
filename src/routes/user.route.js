@@ -6,13 +6,14 @@ import {
     loginUser,
     logoutUser,
     reCreateAccessToken,
-    uploadFaceProfile
+    uploadFaceProfile,
+    getCurrentUser
 } from "../controllers/user.controller.js";
 
 const router = Router();
 
 // Public routes
-router.post("/register", registerUser);
+router.post("/register", upload.single("image"), registerUser);
 router.post("/login", loginUser);
 router.post("/refresh-token", reCreateAccessToken);
 
@@ -20,5 +21,6 @@ router.post("/refresh-token", reCreateAccessToken);
 router.use(verifyJWT);
 router.post("/logout", logoutUser);
 router.post("/upload-face-profile", upload.single("image"), uploadFaceProfile);
+router.get("/current-user", getCurrentUser);
 
 export default router;

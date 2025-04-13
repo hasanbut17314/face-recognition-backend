@@ -30,25 +30,43 @@ const generateAccessAndRefereshTokens = async (userId) => {
 
 const registerUser = asyncHandler(async (req, res) => {
 
-    const { firstName, lastName, email, password, confirmPassword } = req.body
+    const { name, registerationNo, mobileNo, department, password, faceData } = req.body
 
-    if ([password, confirmPassword, firstName, lastName, email].some((value) => value?.trim() === "")) {
+    if ([name, registerationNo, mobileNo, password].some((value) => value?.trim() === "")) {
         throw new ApiError(400, "All fields are required")
     }
 
-    if (password !== confirmPassword) {
-        throw new ApiError(400, "Passwords do not match")
+    if (!faceData.isArray() && faceData.length === 0) {
+        throw new ApiError(400, "Face data is required")
+    }
+
+    let image = null;
+    if (req.file) {
+        const result = await uploadOnCloudinary(req.file.path)
+        image = result.secure_url
+        if (result.error) {
+            throw new ApiError(500, "Something went wrong while uploading image to cloudinary")
+        }
     }
 
     const user = await User.create({
-        firstName,
-        lastName,
-        email,
+        name,
+        registerationNo,
+        mobileNo,
         password,
+        department,
+        image,
         role: "user"
     })
 
-    const { accessToken, refreshToken } = await generateAccessAndRefereshTokens(user._id)
+    const faceProfile = await FaceProfile.create({
+        userId: user._id,
+        faceData
+    })
+
+    if (!faceProfile) {
+        throw new ApiError(500, "Failed to create face profile")
+    }
 
     const createdUser = await User.findById(user._id).select("-password -refreshToken -__v")
     if (!createdUser) {
@@ -57,12 +75,10 @@ const registerUser = asyncHandler(async (req, res) => {
 
     return res
         .status(201)
-        .cookie("accessToken", accessToken, options)
-        .cookie("refreshToken", refreshToken, options)
         .json(
             new ApiResponse(
                 201,
-                { user: createdUser, accessToken, refreshToken },
+                createdUser,
                 "User created successfully"
             )
         )
@@ -71,13 +87,13 @@ const registerUser = asyncHandler(async (req, res) => {
 
 const loginUser = asyncHandler(async (req, res) => {
 
-    const { email, password } = req.body
+    const { registerationNo, password } = req.body
 
-    if ([email, password].some((value) => value.trim() === "")) {
+    if ([registerationNo, password].some((value) => value.trim() === "")) {
         throw new ApiError(400, "All fields are required")
     }
 
-    const user = await User.findOne({ email })
+    const user = await User.findOne({ registerationNo })
 
     if (!user) {
         throw new ApiError(404, "User not found")
@@ -196,10 +212,27 @@ const uploadFaceProfile = asyncHandler(async (req, res) => {
     );
 });
 
+const getCurrentUser = asyncHandler(async (req, res) => {
+    const user = await User.findById(req.user._id).select("-password -refreshToken -__v")
+    if (!user) {
+        throw new ApiError(404, "User not found")
+    }
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                user,
+                "User found successfully"
+            )
+        )
+})
+
 export {
     registerUser,
     loginUser,
     logoutUser,
     reCreateAccessToken,
-    uploadFaceProfile
+    uploadFaceProfile,
+    getCurrentUser
 }

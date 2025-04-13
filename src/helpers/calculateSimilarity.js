@@ -1,114 +1,79 @@
-/**
- * Calculate similarity between two faces detected by Google Vision API
- * This function uses multiple facial landmarks and features to determine similarity
- * @param {Object} face1 - Face annotation from Google Vision API for the first face
- * @param {Object} face2 - Face annotation from Google Vision API for the second face
- * @returns {Number} - Similarity score between 0 and 1 (higher is more similar)
- */
-export function calculateFaceSimilarity(face1, face2) {
-    // Define all available facial landmarks to use for comparison
-    const landmarkKeys = [
-        'leftEyePosition',
-        'rightEyePosition',
-        'nosePosition',
-        'mouthLeftPosition',
-        'mouthRightPosition',
-        'leftEyebrowUpperMidPosition',
-        'rightEyebrowUpperMidPosition',
-        'leftEarPosition',
-        'rightEarPosition',
-        'chinPosition'
-    ];
+// Function to calculate similarity between facial data points
+const calculateFaceSimilarity = (receivedFace, storedFace) => {
+    // Calculate differences in angles
+    const pitchDiff = Math.abs(receivedFace.pitchAngle - storedFace.pitchAngle);
+    const rollDiff = Math.abs(receivedFace.rollAngle - storedFace.rollAngle);
+    const yawDiff = Math.abs(receivedFace.yawAngle - storedFace.yawAngle);
 
-    // Define facial features to compare
-    const featureKeys = [
-        'joyLikelihood',
-        'sorrowLikelihood',
-        'angerLikelihood',
-        'surpriseLikelihood',
-        'detectionConfidence',
-        'landmarkingConfidence'
-    ];
+    // Calculate differences in face bounds (position and size)
+    const boundsDiff = {
+        heightDiff: Math.abs(receivedFace.bounds.height - storedFace.bounds.height),
+        widthDiff: Math.abs(receivedFace.bounds.width - storedFace.bounds.width),
+        xDiff: Math.abs(receivedFace.bounds.x - storedFace.bounds.x),
+        yDiff: Math.abs(receivedFace.bounds.y - storedFace.bounds.y)
+    };
 
-    let similarityScore = 0;
-    let totalWeight = 0;
+    // Calculate similarity score (lower is better)
+    // You can adjust these thresholds based on your requirements
+    const angleTolerance = 15; // degrees
+    const sizeTolerance = 50; // pixels
+    const positionTolerance = 70; // pixels
 
-    // Compare facial landmarks (weight: 0.7)
-    const landmarkWeight = 0.7;
-    let landmarkScore = 0;
-    let validLandmarks = 0;
-
-    landmarkKeys.forEach(key => {
-        if (face1[key] && face2[key]) {
-            const distance = calculateDistance(face1[key], face2[key]);
-            // Normalize and invert distance (closer = more similar)
-            // Use a sigmoid-like function to make the score more sensitive to small differences
-            landmarkScore += 1 / (1 + Math.exp(distance - 10));
-            validLandmarks++;
-        }
-    });
-
-    // Only add landmark score if we have valid landmarks
-    if (validLandmarks > 0) {
-        similarityScore += (landmarkScore / validLandmarks) * landmarkWeight;
-        totalWeight += landmarkWeight;
-    }
-
-    // Compare facial features (weight: 0.3)
-    const featureWeight = 0.3;
-    let featureScore = 0;
-    let validFeatures = 0;
-
-    featureKeys.forEach(key => {
-        if (face1[key] !== undefined && face2[key] !== undefined) {
-            // For likelihood values (joy, sorrow, etc.), compare the enum values
-            if (key.includes('Likelihood')) {
-                const likelihoodValues = ['UNKNOWN', 'VERY_UNLIKELY', 'UNLIKELY', 'POSSIBLE', 'LIKELY', 'VERY_LIKELY'];
-                const index1 = likelihoodValues.indexOf(face1[key]);
-                const index2 = likelihoodValues.indexOf(face2[key]);
-
-                if (index1 !== -1 && index2 !== -1) {
-                    // Calculate similarity based on how close the likelihood values are
-                    const maxDiff = likelihoodValues.length - 1;
-                    const diff = Math.abs(index1 - index2);
-                    featureScore += 1 - (diff / maxDiff);
-                    validFeatures++;
-                }
-            }
-            // For confidence values, compare directly
-            else if (key.includes('Confidence')) {
-                const diff = Math.abs(face1[key] - face2[key]);
-                featureScore += 1 - diff;
-                validFeatures++;
-            }
-        }
-    });
-
-    // Only add feature score if we have valid features
-    if (validFeatures > 0) {
-        similarityScore += (featureScore / validFeatures) * featureWeight;
-        totalWeight += featureWeight;
-    }
-
-    // If we have no valid comparisons, return 0
-    if (totalWeight === 0) {
-        return 0;
-    }
-
-    // Normalize the final score
-    return similarityScore / totalWeight;
-}
-
-/**
- * Calculate Euclidean distance between two points
- * @param {Object} point1 - Point with x and y coordinates
- * @param {Object} point2 - Point with x and y coordinates
- * @returns {Number} - Euclidean distance between the points
- */
-function calculateDistance(point1, point2) {
-    return Math.sqrt(
-        Math.pow(point1.x - point2.x, 2) +
-        Math.pow(point1.y - point2.y, 2)
+    // Check if differences are within tolerance
+    const anglesMatch = (
+        pitchDiff <= angleTolerance &&
+        rollDiff <= angleTolerance &&
+        yawDiff <= angleTolerance
     );
-}
 
+    const sizeMatch = (
+        boundsDiff.heightDiff <= sizeTolerance &&
+        boundsDiff.widthDiff <= sizeTolerance
+    );
+
+    const positionMatch = (
+        boundsDiff.xDiff <= positionTolerance &&
+        boundsDiff.yDiff <= positionTolerance
+    );
+
+    // Return overall match result and confidence score
+    const matchConfidence = 100 - (
+        (pitchDiff + rollDiff + yawDiff) / 3 / angleTolerance * 33 +
+        (boundsDiff.heightDiff + boundsDiff.widthDiff) / 2 / sizeTolerance * 33 +
+        (boundsDiff.xDiff + boundsDiff.yDiff) / 2 / positionTolerance * 34
+    );
+
+    return {
+        isMatch: anglesMatch && sizeMatch && positionMatch,
+        confidence: Math.max(0, matchConfidence),
+        details: {
+            anglesMatch,
+            sizeMatch,
+            positionMatch,
+            angleDifferences: { pitchDiff, rollDiff, yawDiff },
+            boundsDifferences: boundsDiff
+        }
+    };
+};
+
+// Function to find best match among stored face data
+export const findBestFaceMatch = (receivedFace, storedFaces) => {
+    if (!storedFaces || storedFaces.length === 0) {
+        return { isMatch: false, confidence: 0 };
+    }
+
+    let bestMatch = {
+        isMatch: false,
+        confidence: 0
+    };
+
+    for (const storedFace of storedFaces) {
+        const similarity = calculateFaceSimilarity(receivedFace, storedFace);
+
+        if (similarity.isMatch && similarity.confidence > bestMatch.confidence) {
+            bestMatch = similarity;
+        }
+    }
+
+    return bestMatch;
+};

@@ -36,8 +36,9 @@ const registerUser = asyncHandler(async (req, res) => {
         throw new ApiError(400, "All fields are required")
     }
 
-    if (!faceData.isArray() && faceData.length === 0) {
-        throw new ApiError(400, "Face data is required")
+    const parsedFaceData = JSON.parse(faceData);
+    if (!Array.isArray(parsedFaceData) || parsedFaceData.length === 0) {
+        throw new ApiError(400, "Face data is required");
     }
 
     let image = null;
@@ -61,7 +62,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
     const faceProfile = await FaceProfile.create({
         userId: user._id,
-        faceData
+        faceData: parsedFaceData
     })
 
     if (!faceProfile) {

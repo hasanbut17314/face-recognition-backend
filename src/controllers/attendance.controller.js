@@ -30,7 +30,10 @@ const markAttendanceByFaceRecognition = asyncHandler(async (req, res) => {
     const MINIMUM_CONFIDENCE = 70; // You can adjust this threshold
 
     if (!matchResult.isMatch || matchResult.confidence < MINIMUM_CONFIDENCE) {
-        throw new ApiError(401, 'Face verification failed. Face data does not match profile.');
+        return res.json({
+            isMatch: false,
+            confidence: matchResult.confidence,
+        })
     }
 
     // Check if attendance for today already exists
@@ -71,15 +74,11 @@ const markAttendanceByFaceRecognition = asyncHandler(async (req, res) => {
         });
     }
 
-    return res.status(200).json(
-        new ApiResponse(
-            200,
-            attendance,
-            existingAttendance && existingAttendance.checkIn && !existingAttendance.checkOut
-                ? "Check-out marked successfully"
-                : "Check-in marked successfully"
-        )
-    );
+    return res.status(200).json({
+        isMatch: true,
+        confidence: matchResult.confidence,
+        attendance: attendance
+    });
 });
 
 export {

@@ -1,6 +1,6 @@
 # Face Recognition Attendance System
 
-A robust backend system for marking attendance using facial recognition technology. This system uses Google Cloud Vision API for face detection and a custom similarity algorithm for face matching.
+A robust backend system for marking attendance using facial recognition technology. This system uses FaceApi.js and Tensorflow.js for face detection and a custom similarity algorithm for face matching.
 
 ## Features
 
@@ -14,7 +14,7 @@ A robust backend system for marking attendance using facial recognition technolo
 
 - Node.js and Express.js
 - MongoDB with Mongoose
-- Google Cloud Vision API for face detection
+- Face-api.js for face detection
 - Cloudinary for image storage
 - JWT for authentication
 - Multer for file uploads
@@ -23,7 +23,7 @@ A robust backend system for marking attendance using facial recognition technolo
 
 - Node.js (v14 or higher)
 - MongoDB
-- Google Cloud account with Vision API enabled
+- Face-api.js with tensorflow/tfjs-node enviroment
 - Cloudinary account
 
 ## Environment Variables
@@ -38,7 +38,6 @@ REFRESH_TOKEN_SECRET=your_refresh_token_secret
 CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
 CLOUDINARY_API_KEY=your_cloudinary_api_key
 CLOUDINARY_API_SECRET=your_cloudinary_api_secret
-GOOGLE_APPLICATION_CREDENTIALS=path_to_your_google_credentials_json
 CORS_ORIGIN=http://localhost:3000
 ```
 
@@ -59,11 +58,11 @@ CORS_ORIGIN=http://localhost:3000
 
 ### User Routes
 
-- `POST /api/v1/users/register` - Register a new user
-- `POST /api/v1/users/login` - Login a user
-- `POST /api/v1/users/refresh-token` - Refresh access token
-- `POST /api/v1/users/logout` - Logout a user
-- `POST /api/v1/users/upload-face-profile` - Upload face profile image
+- `POST /api/users/invite` - Invite a new user
+- `POST /api/users/login` - Login a user
+- `POST /api/users/refresh-token` - Refresh access token
+- `POST /api/users/logout` - Logout a user
+- `POST /api/users/updateUser` - Upload face profile image and other details
 
 ### Attendance Routes
 

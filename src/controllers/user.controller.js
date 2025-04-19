@@ -2,9 +2,12 @@ import asyncHandler from "../utils/asyncHandler.js"
 import ApiResponse from "../utils/ApiResponse.js"
 import ApiError from "../utils/ApiError.js"
 import { User } from "../models/user.model.js"
-import { FaceProfile } from "../models/faceprofile.model.js"
 import jwt from "jsonwebtoken"
 import { uploadOnCloudinary } from "../utils/cloudinary.js"
+import { sendEmail } from "../utils/email.js"
+import loadFaceApiModels from "../utils/initializeModels.js"
+import canvas from "canvas"
+import * as faceapi from "face-api.js"
 
 const options = {
     httpOnly: true,
@@ -28,50 +31,46 @@ const generateAccessAndRefereshTokens = async (userId) => {
     }
 }
 
-const registerUser = asyncHandler(async (req, res) => {
+const inviteUser = asyncHandler(async (req, res) => {
 
-    const { name, registerationNo, mobileNo, department, password, faceData } = req.body
+    // if (!req.user || req.user.role !== "admin") {
+    //     throw new ApiError(401, "Unauthorized request")
+    // }
 
-    if ([name, registerationNo, mobileNo, password].some((value) => value?.trim() === "")) {
+    const { registerationNo, password, email, role } = req.body
+    if ([registerationNo, password, email, role].some((value) => value.trim() === "")) {
         throw new ApiError(400, "All fields are required")
     }
 
-    const parsedFaceData = JSON.parse(faceData);
-    if (!Array.isArray(parsedFaceData) || parsedFaceData.length === 0) {
-        throw new ApiError(400, "Face data is required");
-    }
-
-    let image = null;
-    if (req.file) {
-        const result = await uploadOnCloudinary(req.file.path)
-        image = result.secure_url
-        if (result.error) {
-            throw new ApiError(500, "Something went wrong while uploading image to cloudinary")
-        }
+    const existingUser = await User.findOne({ registerationNo })
+    if (existingUser) {
+        throw new ApiError(400, "User already exists with this registeration number")
     }
 
     const user = await User.create({
-        name,
         registerationNo,
-        mobileNo,
         password,
-        department,
-        image,
-        role: "user"
+        email,
+        role,
+        isFirstLogin: true
     })
 
-    const faceProfile = await FaceProfile.create({
-        userId: user._id,
-        faceData: parsedFaceData
+    const mail = await sendEmail({
+        to: email,
+        subject: "Account Invited",
+        html: `
+            <h1>Welcome to Face Recognition Attendance System</h1>
+            <p>We are excited to have you join our community. Please use the following credentials to log in to our Face Recognition Attendance System app:</p>
+            <ul>
+                <li><strong>Registeration No:</strong> ${registerationNo}</li>
+                <li><strong>Password:</strong> ${password}</li>
+            </ul>
+            <p>If you have any questions or need further assistance, please don't hesitate to contact our support team.</p>
+            <p>Thank you for choosing our platform!</p>
+        `
     })
-
-    if (!faceProfile) {
-        throw new ApiError(500, "Failed to create face profile")
-    }
-
-    const createdUser = await User.findById(user._id).select("-password -refreshToken -__v")
-    if (!createdUser) {
-        throw new ApiError(500, "Failed to create user")
+    if (!mail.success) {
+        throw new ApiError(403, "Failed to send email! Provide valid email")
     }
 
     return res
@@ -79,8 +78,8 @@ const registerUser = asyncHandler(async (req, res) => {
         .json(
             new ApiResponse(
                 201,
-                createdUser,
-                "User created successfully"
+                user,
+                "User invited successfully"
             )
         )
 
@@ -90,7 +89,7 @@ const loginUser = asyncHandler(async (req, res) => {
 
     const { registerationNo, password } = req.body
 
-    if ([registerationNo, password].some((value) => value.trim() === "")) {
+    if (!registerationNo || !password) {
         throw new ApiError(400, "All fields are required")
     }
 
@@ -120,6 +119,60 @@ const loginUser = asyncHandler(async (req, res) => {
                 "User logged in successfully"
             )
         )
+})
+
+const updateUser = asyncHandler(async (req, res) => {
+
+    const { name, mobileNo, department, password } = req.body
+    if (!name) {
+        throw new ApiError(400, "Name is required")
+    }
+
+    if (!req.file) {
+        throw new ApiError(400, "Image is required")
+    }
+
+    const imagePath = req.file.path;
+    const img = await canvas.loadImage(imagePath);
+
+    const loadModels = await loadFaceApiModels();
+    if (!loadModels) {
+        throw new ApiError(500, "Something went wrong while loading face-api.js models")
+    }
+
+    const detections = await faceapi.detectSingleFace(img)
+        .withFaceLandmarks()
+        .withFaceDescriptor();
+
+    if (!detections) {
+        throw new ApiError(400, "No face detected in the image");
+    }
+
+    let image = null;
+    if (req.file) {
+        const result = await uploadOnCloudinary(req.file.path)
+        image = result.secure_url
+    }
+
+    const user = await User.findByIdAndUpdate(
+        req.user._id,
+        {
+            name,
+            mobileNo,
+            department,
+            password,
+            image,
+            isFirstLogin: false
+        },
+        {
+            new: true,
+            select: "-password -refreshToken -__v"
+        }
+    )
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, user, "User updated successfully"))
 })
 
 const logoutUser = asyncHandler(async (req, res) => {
@@ -190,29 +243,6 @@ const reCreateAccessToken = asyncHandler(async (req, res) => {
 
 })
 
-const uploadFaceProfile = asyncHandler(async (req, res) => {
-    const userId = req.user._id;
-    const imageFile = req.file;
-
-    if (!imageFile || !userId) {
-        throw new ApiError(400, 'Image file and user id is required');
-    }
-    const cloudinaryResponse = await uploadOnCloudinary(imageFile.path);
-
-    if (!cloudinaryResponse) {
-        throw new ApiError(500, 'Failed to upload image to Cloudinary');
-    }
-
-    const faceProfile = await FaceProfile.create({
-        userId,
-        image: cloudinaryResponse.secure_url,
-    });
-
-    return res.status(201).json(
-        new ApiResponse(201, faceProfile, 'Face profile uploaded successfully')
-    );
-});
-
 const getCurrentUser = asyncHandler(async (req, res) => {
     const user = await User.findById(req.user._id).select("-password -refreshToken -__v")
     if (!user) {
@@ -230,10 +260,10 @@ const getCurrentUser = asyncHandler(async (req, res) => {
 })
 
 export {
-    registerUser,
+    inviteUser,
     loginUser,
+    updateUser,
     logoutUser,
     reCreateAccessToken,
-    uploadFaceProfile,
     getCurrentUser
 }

@@ -2,41 +2,46 @@ import asyncHandler from "../utils/asyncHandler.js";
 import ApiError from "../utils/ApiError.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import { Attendance } from "../models/attendance.model.js";
-import { FaceProfile } from "../models/faceprofile.model.js";
-import { findBestFaceMatch } from "../helpers/calculateSimilarity.js";
+import { User } from "../models/user.model.js";
+import loadFaceApiModels from "../utils/initializeModels.js";
+import compareFaces from "../utils/compareFaces.js";
+import fs from "fs";
 
 const markAttendanceByFaceRecognition = asyncHandler(async (req, res) => {
-    const { faceData } = req.body;
 
-    if (!Array.isArray(faceData) || faceData.length === 0) {
-        throw new ApiError(400, 'Face data is required');
+    const user = await User.findById(req.user._id);
+    if (!user) {
+        throw new ApiError(404, "User not found");
     }
 
-    const faceProfile = await FaceProfile.findOne({ userId: req.user._id });
-
-    if (!faceProfile) {
-        throw new ApiError(404, 'Face profile not found');
+    const storedImage = user.image;
+    if (!storedImage) {
+        throw new ApiError(404, "User image not found");
     }
 
-    if (!faceProfile.faceData || faceProfile.faceData.length === 0) {
-        throw new ApiError(404, 'No stored face data found for comparison');
+    if (!req.file) {
+        throw new ApiError(400, "Image is required")
+    }
+    const newImage = req.file.path;
+
+    const loadModels = await loadFaceApiModels();
+    if (!loadModels) {
+        throw new ApiError(500, "Failed to load face-api.js models");
     }
 
-    // Compare the received face data with stored face data
-    const receivedFace = faceData[0]; // Using the first face data from the array
-    const matchResult = findBestFaceMatch(receivedFace, faceProfile.faceData);
-
-    // If match confidence is too low, reject
-    const MINIMUM_CONFIDENCE = 70; // You can adjust this threshold
-
-    if (!matchResult.isMatch || matchResult.confidence < MINIMUM_CONFIDENCE) {
-        return res.json({
-            isMatch: false,
-            confidence: matchResult.confidence,
+    const result = await compareFaces(storedImage, newImage);
+    if (!result.matched) {
+        return res.status(200).json({
+            success: true,
+            isMatched: false,
+            status: 200,
+            message: "Face not matched",
+            data: {}
         })
     }
 
-    // Check if attendance for today already exists
+    fs.unlinkSync(newImage);
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -60,9 +65,14 @@ const markAttendanceByFaceRecognition = asyncHandler(async (req, res) => {
             attendance = await existingAttendance.save();
         } else {
             // Already checked in and out
-            return res.status(200).json(
-                new ApiResponse(200, existingAttendance, "Attendance already marked for today")
-            );
+            return res.status(200).json({
+                success: true,
+                isMatched: true,
+                isAlreadyMarked: true,
+                status: 200,
+                message: "Already checked in and out",
+                data: existingAttendance
+            });
         }
     } else {
         // Create new attendance record with check-in
@@ -75,12 +85,98 @@ const markAttendanceByFaceRecognition = asyncHandler(async (req, res) => {
     }
 
     return res.status(200).json({
-        isMatch: true,
-        confidence: matchResult.confidence,
-        attendance: attendance
+        success: true,
+        isMatched: true,
+        status: 200,
+        isAlreadyMarked: existingAttendance ? true : false,
+        message: "Attendance marked successfully",
+        data: attendance
     });
+
 });
 
+const getUserAttendance = asyncHandler(async (req, res) => {
+    const { page = 1, limit = 10, date, status } = req.query
+
+    const query = {
+        userId: req.user._id
+    }
+
+    if (date) {
+        query.date = new Date(date)
+    }
+
+    if (status && (status === 'present' || status === 'absent')) {
+        query.status = status
+    }
+
+    const attendances = await Attendance.find(query)
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .sort({ createdAt: -1 })
+        .populate("userId", "name email image department")
+
+    const total = await Attendance.countDocuments(query)
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            {
+                attendances,
+                pagination: {
+                    page,
+                    limit,
+                    total
+                }
+            },
+            "Attendances fetched successfully"
+        )
+    )
+})
+
+const allAttendance = asyncHandler(async (req, res) => {
+    const { page = 1, limit = 10, date, status } = req.query
+
+    if (req.user.role !== 'admin') {
+        throw new ApiError(401, "Unauthorized request")
+    }
+
+    const query = {}
+
+    if (date) {
+        query.date = new Date(date)
+    }
+
+    if (status && (status === 'present' || status === 'absent')) {
+        query.status = status
+    }
+
+    const attendances = await Attendance.find(query)
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .sort({ createdAt: -1 })
+        .populate("userId", "name email image department")
+
+    const total = await Attendance.countDocuments(query)
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            {
+                attendances,
+                pagination: {
+                    page,
+                    limit,
+                    total
+                }
+            },
+            "Attendances fetched successfully"
+        )
+    )
+})
+
 export {
-    markAttendanceByFaceRecognition
+    markAttendanceByFaceRecognition,
+    getUserAttendance,
+    allAttendance
 };

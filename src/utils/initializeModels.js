@@ -8,7 +8,7 @@ faceapi.env.monkeyPatch({ Canvas, Image, ImageData });
 const loadFaceApiModels = async () => {
     try {
         const __dirname = path.resolve();
-        const modelPath = path.join(__dirname, 'models');
+        const modelPath = path.join(__dirname, 'public', 'models');
         console.log('Loading face-api.js models from:', modelPath);
 
         await Promise.all([

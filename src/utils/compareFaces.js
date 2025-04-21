@@ -1,11 +1,13 @@
 import * as faceapi from 'face-api.js';
 import canvas from 'canvas';
 
-const compareFaces = async (cloudinaryUrl, uploadedImagePath) => {
+const compareFaces = async (cloudinaryUrl, uploadedImageBuffer) => {
     try {
-
+        // Load the stored image from URL as before
         const storedImage = await canvas.loadImage(cloudinaryUrl);
-        const uploadedImage = await canvas.loadImage(uploadedImagePath);
+
+        // Load the uploaded image from buffer instead of path
+        const uploadedImage = await canvas.loadImage(uploadedImageBuffer);
 
         const storedFaceDetection = await faceapi.detectSingleFace(storedImage)
             .withFaceLandmarks()
@@ -41,4 +43,4 @@ const compareFaces = async (cloudinaryUrl, uploadedImagePath) => {
     }
 };
 
-export default compareFaces
+export default compareFaces;

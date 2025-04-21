@@ -6,8 +6,6 @@ import jwt from "jsonwebtoken"
 import { uploadOnCloudinary } from "../utils/cloudinary.js"
 import { sendEmail } from "../utils/email.js"
 import loadFaceApiModels from "../utils/initializeModels.js"
-import canvas from "canvas"
-import * as faceapi from "face-api.js"
 
 const options = {
     httpOnly: true,
@@ -132,25 +130,14 @@ const updateUser = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Image is required")
     }
 
-    const imagePath = req.file.path;
-    const img = await canvas.loadImage(imagePath);
-
     const loadModels = await loadFaceApiModels();
     if (!loadModels) {
         throw new ApiError(500, "Something went wrong while loading face-api.js models")
     }
 
-    const detections = await faceapi.detectSingleFace(img)
-        .withFaceLandmarks()
-        .withFaceDescriptor();
-
-    if (!detections) {
-        throw new ApiError(400, "No face detected in the image");
-    }
-
     let image = null;
     if (req.file) {
-        const result = await uploadOnCloudinary(req.file.path)
+        const result = await uploadOnCloudinary(req.file.buffer, req.file.originalname)
         image = result.secure_url
     }
 

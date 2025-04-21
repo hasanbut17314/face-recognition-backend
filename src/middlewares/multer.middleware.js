@@ -1,16 +1,6 @@
 import multer from "multer";
-import { v4 as uuidv4 } from "uuid";
-import path from "path";
 
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, /tmp/); // Save files to the tmp directory
-    },
-    filename: function (req, file, cb) {
-        const uniqueSuffix = `${uuidv4()}-${Date.now()}`;
-        const extension = path.extname(file.originalname);
-        cb(null, `${uniqueSuffix}${extension}`);
-    }
-});
+// Use memory storage instead of disk storage for serverless environments
+const storage = multer.memoryStorage();
 
 export const upload = multer({ storage });

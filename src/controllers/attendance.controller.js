@@ -5,7 +5,6 @@ import { Attendance } from "../models/attendance.model.js";
 import { User } from "../models/user.model.js";
 import loadFaceApiModels from "../utils/initializeModels.js";
 import compareFaces from "../utils/compareFaces.js";
-import fs from "fs";
 
 const markAttendanceByFaceRecognition = asyncHandler(async (req, res) => {
 
@@ -22,7 +21,7 @@ const markAttendanceByFaceRecognition = asyncHandler(async (req, res) => {
     if (!req.file) {
         throw new ApiError(400, "Image is required")
     }
-    const newImage = req.file.path;
+    const newImage = req.file.buffer;
 
     const loadModels = await loadFaceApiModels();
     if (!loadModels) {
@@ -39,8 +38,6 @@ const markAttendanceByFaceRecognition = asyncHandler(async (req, res) => {
             data: {}
         })
     }
-
-    fs.unlinkSync(newImage);
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);

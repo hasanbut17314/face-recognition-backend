@@ -132,43 +132,31 @@ const updateUser = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Image is required")
     }
 
-    const imagePath = req.file.path;
-    const img = await canvas.loadImage(imagePath);
-
-    const loadModels = await loadFaceApiModels();
-    if (!loadModels) {
-        throw new ApiError(500, "Something went wrong while loading face-api.js models")
-    }
-
-    const detections = await faceapi.detectSingleFace(img)
-        .withFaceLandmarks()
-        .withFaceDescriptor();
-
-    if (!detections) {
-        throw new ApiError(400, "No face detected in the image");
-    }
-
     let image = null;
     if (req.file) {
         const result = await uploadOnCloudinary(req.file.path)
-        image = result.secure_url
+        image = result?.secure_url
     }
 
-    const user = await User.findByIdAndUpdate(
-        req.user._id,
-        {
-            name,
-            mobileNo,
-            department,
-            password,
-            image,
-            isFirstLogin: false
-        },
-        {
-            new: true,
-            select: "-password -refreshToken -__v"
-        }
-    )
+    const user = await User.findById(req.user._id)
+
+    user.name = name
+    user.mobileNo = mobileNo
+    user.department = department
+    user.isFirstLogin = false
+
+    if (password) {
+        user.password = password
+    }
+
+    if (image) {
+        user.image = image
+    }
+
+    await user.save()
+
+    user.password = undefined
+    user.refreshToken = undefined
 
     return res
         .status(200)

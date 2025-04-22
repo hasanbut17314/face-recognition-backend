@@ -9,7 +9,11 @@ faceapi.env.monkeyPatch({ Canvas, Image, ImageData });
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+let modelsLoaded = false;
+
 const loadFaceApiModels = async () => {
+    if (modelsLoaded) return true;
+
     try {
         const modelPath = path.join(__dirname, '..', '..', 'models');
         console.log('Loading face-api.js models from:', modelPath);
@@ -21,6 +25,7 @@ const loadFaceApiModels = async () => {
         ]);
 
         console.log('All face-api.js models loaded successfully');
+        modelsLoaded = true;
         return true;
     } catch (error) {
         console.error('Error loading face-api.js models:', error);

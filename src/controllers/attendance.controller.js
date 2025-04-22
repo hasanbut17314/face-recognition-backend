@@ -26,10 +26,13 @@ const markAttendanceByFaceRecognition = asyncHandler(async (req, res) => {
 
     const loadModels = await loadFaceApiModels();
     if (!loadModels) {
+        fs.unlinkSync(newImage);
         throw new ApiError(500, "Failed to load face-api.js models");
     }
 
-    const result = await compareFaces(storedImage, newImage);
+    const result = await compareFaces(storedImage, newImage, user._id.toString());
+    fs.unlinkSync(newImage);
+
     if (!result.matched) {
         return res.status(200).json({
             success: true,
@@ -39,8 +42,6 @@ const markAttendanceByFaceRecognition = asyncHandler(async (req, res) => {
             data: {}
         })
     }
-
-    fs.unlinkSync(newImage);
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);

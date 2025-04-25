@@ -185,7 +185,8 @@ const getAttendanceByUserId = asyncHandler(async (req, res) => {
   const attendance = await Attendance.find(query)
     .skip((page - 1) * limit)
     .limit(limit)
-    .sort({ createdAt: -1 });
+    .sort({ createdAt: -1 })
+    .populate("userId", "name email image department");
 
   const total = await Attendance.countDocuments(query);
 

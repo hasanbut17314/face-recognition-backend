@@ -94,18 +94,19 @@ const loginUser = asyncHandler(async (req, res) => {
 
   const user = await User.findOne({ registerationNo });
 
-  if (user.isBlocked) {
-    throw new ApiError(401, "Your account is Blocked by Administration.");
-  }
-
+  
   if (!user) {
     throw new ApiError(404, "User not found");
   }
-
+  
   const isPasswordCorrect = await user.isPasswordCorrect(password);
-
+  
   if (!isPasswordCorrect) {
     throw new ApiError(401, "Invalid credentials");
+  }
+  
+  if (user.isBlocked) {
+    throw new ApiError(401, "Your account is Blocked by Administration.");
   }
 
   const { accessToken, refreshToken } = await generateAccessAndRefereshTokens(

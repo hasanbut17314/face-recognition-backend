@@ -5,7 +5,7 @@ import path from "path";
 // Configuration for multer
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, "/tmp");
+        cb(null, "D:\\tmp");
     },
     filename: function (req, file, cb) {
         const uniqueSuffix = `${uuidv4()}-${Date.now()}`;

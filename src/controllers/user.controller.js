@@ -60,6 +60,7 @@ const inviteUser = asyncHandler(async (req, res) => {
     email,
     role,
     isFirstLogin: true,
+    status: "pending",
   });
 
   const mail = await sendEmail({
@@ -151,6 +152,7 @@ const updateUser = asyncHandler(async (req, res) => {
   user.mobileNo = mobileNo;
   user.department = department;
   user.isFirstLogin = false;
+  user.status = "active";
 
   if (password) {
     user.password = password;
@@ -253,6 +255,7 @@ const blockUser = asyncHandler(async (req, res) => {
   const { userId } = req.params;
   const user = await User.findById(userId);
   user.isBlocked = true;
+  user.status = "blocked";
   await user.save();
   return res
     .status(200)
@@ -263,6 +266,7 @@ const unblockUser = asyncHandler(async (req, res) => {
   const { userId } = req.params;
   const user = await User.findById(userId);
   user.isBlocked = false;
+  user.status = "active";
   await user.save();
   return res
     .status(200)
@@ -294,6 +298,17 @@ const getAllUsers = asyncHandler(async (req, res) => {
     );
 });
 
+const deleteUser = asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+  const user = await User.findByIdAndDelete(userId);
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "User deleted successfully"));
+});
+
 export {
   inviteUser,
   loginUser,
@@ -304,4 +319,5 @@ export {
   blockUser,
   unblockUser,
   getAllUsers,
+  deleteUser,
 };

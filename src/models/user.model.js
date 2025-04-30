@@ -42,6 +42,11 @@ const userSchema = new Schema(
       type: Boolean,
       default: false,
     },
+    status: {
+      type: String,
+      enum: ["active", "blocked", "pending"],
+      default: "active",
+    },
     refreshToken: {
       type: String,
     },

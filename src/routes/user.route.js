@@ -11,6 +11,7 @@ import {
   getAllUsers,
   blockUser,
   unblockUser,
+  deleteUser,
 } from "../controllers/user.controller.js";
 
 const router = Router();
@@ -26,7 +27,8 @@ router.post("/logout", logoutUser);
 router.post("/updateUser", upload.single("image"), updateUser);
 router.get("/current-user", getCurrentUser);
 router.get("/all-users", getAllUsers);
-router.get("/block-user/:userId", blockUser);
-router.get("/unblock-user/:userId", unblockUser);
+router.post("/block-user/:userId", blockUser);
+router.post("/unblock-user/:userId", unblockUser);
+router.delete("/delete-user/:userId", deleteUser);
 
 export default router;

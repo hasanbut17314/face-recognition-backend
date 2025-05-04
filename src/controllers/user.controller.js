@@ -5,9 +5,6 @@ import { User } from "../models/user.model.js";
 import jwt from "jsonwebtoken";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { sendEmail } from "../utils/email.js";
-import loadFaceApiModels from "../utils/initializeModels.js";
-import canvas from "canvas";
-import * as faceapi from "face-api.js";
 
 const options = {
   httpOnly: true,
@@ -95,17 +92,16 @@ const loginUser = asyncHandler(async (req, res) => {
 
   const user = await User.findOne({ registerationNo });
 
-  
   if (!user) {
     throw new ApiError(404, "User not found");
   }
-  
+
   const isPasswordCorrect = await user.isPasswordCorrect(password);
-  
+
   if (!isPasswordCorrect) {
     throw new ApiError(401, "Invalid credentials");
   }
-  
+
   if (user.isBlocked) {
     throw new ApiError(401, "Your account is Blocked by Administration.");
   }
@@ -274,27 +270,30 @@ const unblockUser = asyncHandler(async (req, res) => {
 });
 
 const getAllUsers = asyncHandler(async (req, res) => {
-  const { page = 1, limit = 10 } = req.query;
+  // const { page = 1, limit = 10 } = req.query;
+  // q='name'
+  const { q } = req.query;
 
   const query = {
     role: "user",
   };
 
-  const users = await User.find(query)
-    .skip((page - 1) * limit)
-    .limit(limit)
-    .sort({ createdAt: -1 });
+  if (q && q.trim() !== "") {
+    query.name = { $regex: q, $options: "i" };
+    query.registerationNo = { $regex: q, $options: "i" };
+    query.email = { $regex: q, $options: "i" };
+  }
+
+  const users = await User.find(query).sort({ createdAt: -1 })
+  // .skip((page - 1) * limit)
+  // .limit(limit)
 
   const total = await User.countDocuments(query);
 
   return res
     .status(200)
     .json(
-      new ApiResponse(
-        200,
-        { users, pagination: { page, limit, total } },
-        "All users fetched successfully"
-      )
+      new ApiResponse(200, { users, total }, "All users fetched successfully")
     );
 });
 
@@ -309,6 +308,29 @@ const deleteUser = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, {}, "User deleted successfully"));
 });
 
+const userStats = asyncHandler(async (req, res) => {
+  const totalUsers = await User.countDocuments({ role: "user" });
+  const totalActiveUsers = await User.countDocuments({
+    role: "user",
+    status: "active",
+  });
+  const totalBlockedUsers = await User.countDocuments({
+    role: "user",
+    status: "blocked",
+  });
+  const totalPendingUsers = await User.countDocuments({
+    role: "user",
+    status: "pending",
+  });
+
+  return res.status(200).json({
+    totalUsers,
+    totalActiveUsers,
+    totalBlockedUsers,
+    totalPendingUsers,
+  });
+});
+
 export {
   inviteUser,
   loginUser,
@@ -320,4 +342,5 @@ export {
   unblockUser,
   getAllUsers,
   deleteUser,
+  userStats,
 };

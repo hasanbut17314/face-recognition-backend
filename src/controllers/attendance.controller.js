@@ -95,7 +95,7 @@ const markAttendanceByFaceRecognition = asyncHandler(async (req, res) => {
 });
 
 const getUserAttendance = asyncHandler(async (req, res) => {
-  const { page = 1, limit = 10, date, status } = req.query;
+  const { date, status } = req.query;
 
   const query = {
     userId: req.user._id,
@@ -110,8 +110,6 @@ const getUserAttendance = asyncHandler(async (req, res) => {
   }
 
   const attendances = await Attendance.find(query)
-    .skip((page - 1) * limit)
-    .limit(limit)
     .sort({ createdAt: -1 })
     .populate("userId", "name email image department");
 
@@ -122,11 +120,7 @@ const getUserAttendance = asyncHandler(async (req, res) => {
       200,
       {
         attendances,
-        pagination: {
-          page,
-          limit,
-          total,
-        },
+        total,
       },
       "Attendances fetched successfully"
     )
@@ -134,7 +128,7 @@ const getUserAttendance = asyncHandler(async (req, res) => {
 });
 
 const allAttendance = asyncHandler(async (req, res) => {
-  const { page = 1, limit = 10, date, status } = req.query;
+  const { date, status } = req.query;
 
   if (req.user.role !== "admin") {
     throw new ApiError(401, "Unauthorized request");
@@ -151,8 +145,6 @@ const allAttendance = asyncHandler(async (req, res) => {
   }
 
   const attendances = await Attendance.find(query)
-    .skip((page - 1) * limit)
-    .limit(limit)
     .sort({ createdAt: -1 })
     .populate("userId", "name email image department");
 
@@ -163,11 +155,7 @@ const allAttendance = asyncHandler(async (req, res) => {
       200,
       {
         attendances,
-        pagination: {
-          page,
-          limit,
-          total,
-        },
+        total,
       },
       "Attendances fetched successfully"
     )
@@ -176,15 +164,12 @@ const allAttendance = asyncHandler(async (req, res) => {
 
 const getAttendanceByUserId = asyncHandler(async (req, res) => {
   const { userId } = req.params;
-  const { page = 1, limit = 10 } = req.query;
 
   const query = {
     userId,
   };
 
   const attendance = await Attendance.find(query)
-    .skip((page - 1) * limit)
-    .limit(limit)
     .sort({ createdAt: -1 })
     .populate("userId", "name email image department");
 
@@ -195,7 +180,7 @@ const getAttendanceByUserId = asyncHandler(async (req, res) => {
     .json(
       new ApiResponse(
         200,
-        { attendance, pagination: { page, limit, total } },
+        { attendance, total },
         "Attendance fetched successfully"
       )
     );

@@ -279,9 +279,11 @@ const getAllUsers = asyncHandler(async (req, res) => {
   };
 
   if (q && q.trim() !== "") {
-    query.name = { $regex: q, $options: "i" };
-    query.registerationNo = { $regex: q, $options: "i" };
-    query.email = { $regex: q, $options: "i" };
+    query.$or = [
+      { name: { $regex: q, $options: "i" } },
+      { registerationNo: { $regex: q, $options: "i" } },
+      { email: { $regex: q, $options: "i" } }
+    ];
   }
 
   const users = await User.find(query).sort({ createdAt: -1 })

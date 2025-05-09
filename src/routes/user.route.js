@@ -12,7 +12,7 @@ import {
   blockUser,
   unblockUser,
   deleteUser,
-  userStats,
+  userStats
 } from "../controllers/user.controller.js";
 
 const router = Router();

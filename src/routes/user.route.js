@@ -12,6 +12,7 @@ import {
   blockUser,
   unblockUser,
   deleteUser,
+  userStats
 } from "../controllers/user.controller.js";
 
 const router = Router();
@@ -30,5 +31,6 @@ router.get("/all-users", getAllUsers);
 router.post("/block-user/:userId", blockUser);
 router.post("/unblock-user/:userId", unblockUser);
 router.delete("/delete-user/:userId", deleteUser);
+router.get("/user-stats", userStats);
 
 export default router;

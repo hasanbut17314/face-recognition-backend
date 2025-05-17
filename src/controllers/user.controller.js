@@ -90,7 +90,7 @@ const loginUser = asyncHandler(async (req, res) => {
     throw new ApiError(400, "All fields are required");
   }
 
-  const user = await User.findOne({ registerationNo });
+  const user = await User.findOne({ registerationNo, role: "user" });
 
   if (!user) {
     throw new ApiError(404, "User not found");
@@ -122,6 +122,44 @@ const loginUser = asyncHandler(async (req, res) => {
         200,
         { user: updatedUser, accessToken, refreshToken },
         "User logged in successfully"
+      )
+    );
+});
+
+const loginAdmin = asyncHandler(async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    throw new ApiError(400, "All fields are required");
+  }
+
+  const admin = await User.findOne({ email, role: "admin" });
+  if (!admin) {
+    throw new ApiError(404, "Admin not found");
+  }
+
+  const isPasswordCorrect = await admin.isPasswordCorrect(password);
+  if (!isPasswordCorrect) {
+    throw new ApiError(401, "Invalid credentials");
+  }
+
+  const { accessToken, refreshToken } = await generateAccessAndRefereshTokens(
+    admin._id
+  );
+
+  const updatedAdmin = await User.findById(admin._id).select(
+    "-password -refreshToken -__v"
+  );
+
+  return res
+    .status(200)
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options)
+    .json(
+      new ApiResponse(
+        200,
+        { user: updatedAdmin, accessToken, refreshToken },
+        "Admin logged in successfully"
       )
     );
 });
@@ -282,11 +320,11 @@ const getAllUsers = asyncHandler(async (req, res) => {
     query.$or = [
       { name: { $regex: q, $options: "i" } },
       { registerationNo: { $regex: q, $options: "i" } },
-      { email: { $regex: q, $options: "i" } }
+      { email: { $regex: q, $options: "i" } },
     ];
   }
 
-  const users = await User.find(query).sort({ createdAt: -1 })
+  const users = await User.find(query).sort({ createdAt: -1 });
   // .skip((page - 1) * limit)
   // .limit(limit)
 
@@ -336,6 +374,7 @@ const userStats = asyncHandler(async (req, res) => {
 export {
   inviteUser,
   loginUser,
+  loginAdmin,
   updateUser,
   logoutUser,
   reCreateAccessToken,

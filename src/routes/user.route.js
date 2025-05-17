@@ -4,6 +4,7 @@ import { upload } from "../middlewares/multer.middleware.js";
 import {
   inviteUser,
   loginUser,
+  loginAdmin,
   updateUser,
   logoutUser,
   reCreateAccessToken,
@@ -18,7 +19,8 @@ import {
 const router = Router();
 
 // Public routes
-router.post("/login", loginUser);
+router.post("/user-login", loginUser);
+router.post("/admin-login", loginAdmin);
 router.post("/refresh-token", reCreateAccessToken);
 
 // Protected routes

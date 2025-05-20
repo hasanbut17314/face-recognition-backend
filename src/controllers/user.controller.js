@@ -371,6 +371,62 @@ const userStats = asyncHandler(async (req, res) => {
   });
 });
 
+const resetPassword = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+  const user = await User.findOne({ email });
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  user.otp = otp;
+  await user.save();
+
+  await sendEmail({
+    to: email,
+    subject: "Password Reset OTP",
+    html: `
+            <h1>Password Reset OTP</h1>
+            <p>Your OTP for password reset is: <strong>${otp}</strong></p>
+            <p>If you did not request this, please ignore this email.</p>
+        `,
+  })
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "OTP sent to your email successfully"));
+});
+
+const verifyOtp = asyncHandler(async (req, res) => {
+  const { email, otp } = req.body;
+  if (!email || !otp) {
+    throw new ApiError(400, "Email and OTP are required");
+  }
+  const user = await User.findOne({ email });
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+  if (user.otp !== otp) {
+    throw new ApiError(400, "Invalid OTP");
+  }
+  user.otp = null;
+  await user.save();
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "OTP verified successfully"));
+});
+
+const updatePassword = asyncHandler(async (req, res) => {
+  const { email, password } = req.body;
+  const user = await User.findOne({ email });
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+  user.password = password;
+  await user.save();
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Password updated successfully"));
+});
+
 export {
   inviteUser,
   loginUser,
@@ -384,4 +440,7 @@ export {
   getAllUsers,
   deleteUser,
   userStats,
+  resetPassword,
+  verifyOtp,
+  updatePassword
 };

@@ -21,5 +21,4 @@ app.get("/", (_, res) => {
     res.send("Hello World!");
 })
 
-
 app.use(errorHandler)

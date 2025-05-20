@@ -13,7 +13,10 @@ import {
   blockUser,
   unblockUser,
   deleteUser,
-  userStats
+  userStats,
+  resetPassword,
+  verifyOtp,
+  updatePassword
 } from "../controllers/user.controller.js";
 
 const router = Router();
@@ -22,6 +25,9 @@ const router = Router();
 router.post("/user-login", loginUser);
 router.post("/admin-login", loginAdmin);
 router.post("/refresh-token", reCreateAccessToken);
+router.post("/reset-password", resetPassword);
+router.post("/verify-otp", verifyOtp);
+router.post("/update-password", updatePassword);
 
 // Protected routes
 router.use(verifyJWT);

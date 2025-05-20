@@ -47,6 +47,9 @@ const userSchema = new Schema(
       enum: ["active", "blocked", "pending"],
       default: "active",
     },
+    otp: {
+      type: String,
+    },
     refreshToken: {
       type: String,
     },

@@ -133,7 +133,10 @@ const loginAdmin = asyncHandler(async (req, res) => {
     throw new ApiError(400, "All fields are required");
   }
 
-  const admin = await User.findOne({ email, role: "admin" });
+  const admin = await User.findOne({
+    $or: [{ email }, { registerationNo: email }],
+    role: "admin",
+  });
   if (!admin) {
     throw new ApiError(404, "Admin not found");
   }
